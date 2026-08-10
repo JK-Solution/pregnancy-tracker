@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>备孕记录 · 家庭日志</title>
+<style>
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --surface2:#eef0f3; --text:#1c1e21; --muted:#5c6470;
+  --accent:#e11d48; --accent-soft:#fde7ec; --border:#e2e5ea; --shadow:0 1px 3px rgba(0,0,0,.08);
+  --good:#16a34a; --warn:#d97706; --bad:#dc2626;
+}
+[data-theme="dark"]{
+  --bg:#0f1115; --surface:#171a21; --surface2:#1f232c; --text:#e7e9ee; --muted:#9aa3b2;
+  --accent:#fb7185; --accent-soft:#3b1f29; --border:#2a2f3a; --shadow:0 1px 3px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.65;font-size:15px;max-width:640px;margin:0 auto;padding-bottom:76px}
+header{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;z-index:50;backdrop-filter:blur(6px)}
+header h1{font-size:17px;font-weight:800;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.date-nav{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bg)}
+.date-nav button{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text);font-size:14px;cursor:pointer}
+.date-nav .cur-date{flex:1;text-align:center;font-weight:700;font-size:15px}
+.btn{border:1px solid var(--border);background:var(--surface2);color:var(--text);padding:7px 14px;border-radius:9px;cursor:pointer;font-size:13.5px;transition:.15s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+.btn.small{padding:5px 10px;font-size:12.5px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin:10px 16px;box-shadow:var(--shadow)}
+.card h3{font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px;justify-content:space-between}
+.card h3 .state{font-size:11px;padding:2px 8px;border-radius:12px;background:var(--surface2);color:var(--muted)}
+.card h3 .state.ok{background:#e2f5e9;color:#166534}
+.card h3 .state.miss{background:#fef3c7;color:#b45309}
+p.muted{color:var(--muted);font-size:12.5px;margin-bottom:8px}
+input[type=number],input[type=text],input[type=date],select,textarea{
+  width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:var(--surface);
+  color:var(--text);font-size:15px;outline:none;margin:4px 0 8px;font-family:inherit
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+label{font-size:13px;color:var(--muted);display:block;margin-top:6px}
+.chip-row{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 8px}
+.chip{border:1px solid var(--border);background:var(--surface);padding:7px 13px;border-radius:20px;font-size:13px;cursor:pointer;transition:.15s;color:var(--text)}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chip:active{transform:scale(.95)}
+.quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:6px 0}
+.quick-grid .chip{text-align:center;padding:9px 4px;font-size:12.5px}
+.form-row{display:flex;gap:8px;align-items:flex-end}
+.form-row .grow{flex:1}
+.save-bar{display:flex;gap:8px;margin-top:6px}
+.note-list{margin-top:6px}
+.note-item{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--surface2);border-radius:8px;margin-top:6px;font-size:13px}
+.note-item .del{color:var(--bad);cursor:pointer;font-size:16px;padding:0 4px}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.summary .cell{background:var(--surface2);border-radius:10px;padding:9px 6px;text-align:center}
+.summary .cell b{display:block;font-size:17px}
+.summary .cell span{font-size:11px;color:var(--muted)}
+.progress-wrap{height:8px;background:var(--surface2);border-radius:6px;overflow:hidden;margin:6px 0}
+.progress-wrap .bar{height:100%;background:var(--accent);border-radius:6px;transition:width .3s}
+canvas{width:100%;height:180px;display:block;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+th,td{border-bottom:1px solid var(--border);padding:6px 4px;text-align:left}
+th{color:var(--muted);font-weight:600}
+.period-banner{border:1px solid var(--accent);background:var(--accent-soft);border-radius:10px;padding:10px 12px;font-size:13px;margin-top:8px}
+.tabbar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:60;max-width:640px;margin:0 auto;overflow-x:auto}
+.tabbar::-webkit-scrollbar{display:none}
+.tab{flex:1 0 62px;min-width:62px;text-align:center;padding:8px 2px 10px;font-size:11px;color:var(--muted);cursor:pointer;border:none;background:none;font-family:inherit}
+.tab .ico{font-size:18px;display:block;margin-bottom:1px}
+.tab.active{color:var(--accent);font-weight:700}
+.page{display:none;padding-top:4px}
+.page.active{display:block}
+/* setup */
+#setupPage{position:fixed;inset:0;background:var(--bg);z-index:100;overflow-y:auto;padding:40px 20px}
+#setupPage h2{font-size:22px;margin-bottom:6px}
+#setupPage p{color:var(--muted);font-size:13.5px;margin-bottom:14px}
+#setupPage .card{margin:12px 0}
+.step-box{background:var(--surface2);border-radius:10px;padding:12px;font-size:13px;margin:8px 0;overflow-x:auto}
+.step-box code{display:block;white-space:pre-wrap;font-family:Consolas,monospace;font-size:12px}
+#syncBadge{font-size:11px;color:var(--muted);padding:3px 8px;border-radius:12px;background:var(--surface2);white-space:nowrap}
+#syncBadge.syncing{color:var(--warn)}
+#syncBadge.done{color:var(--good)}
+#syncBadge.off{color:var(--bad)}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;margin:2px 4px 2px 0}
+.pill.green{background:#e2f5e9;color:#166534}
+.pill.red{background:#fee2e2;color:#b91c1c}
+.pill.yellow{background:#fef3c7;color:#b45309}
+.hidden{display:none!important}
+footer{color:var(--muted);font-size:12px;text-align:center;padding:20px 16px 90px}
+.mistake{border-left:3px solid var(--warn);background:var(--warn-soft,rgba(217,119,6,.08));padding:8px 10px;border-radius:0 8px 8px 0;margin:6px 0;font-size:13px}
+</style>
+</head>
+<body data-theme="light">
+
+<!-- ========== 配置页 ========== -->
+<div id="setupPage" class="hidden">
+  <h2>👋 首次配置（一次就好）</h2>
+  <p>需要连接 Supabase 云数据库，让两台手机共享同一份记录。跟着下面的步骤做，约 10 分钟。</p>
+
+  <div class="card">
+    <h3>第 1 步 · 注册 Supabase</h3>
+    <p class="muted">电脑或手机浏览器打开 <b>https://supabase.com</b> → 右上角 Sign in → 用邮箱或 GitHub 注册登录。</p>
+    <p class="muted">登录后点 <b>New Project</b> → 填名字（随便写，如 family-log）→ 设置数据库密码（记下来）→ 区域选 <b>Southeast Asia (Singapore)</b>（国内访问更快）→ Create new project。</p>
+    <p class="muted">等待 1–2 分钟项目创建完成。</p>
+  </div>
+
+  <div class="card">
+    <h3>第 2 步 · 找到连接信息</h3>
+    <p class="muted">项目首页左侧栏点 <b>Project Settings → API</b>（或首页就有 API Keys 区），复制两个值：</p>
+    <div class="step-box">
+      <b>Project URL</b><code>https://xxxx.supabase.co</code>
+      <b>anon / public key</b><code>eyJhbGciOi...（很长一串）</code>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>第 3 步 · 创建数据表</h3>
+    <p class="muted">左侧栏点 <b>SQL Editor → New Query</b>，粘贴下面整段代码，点 <b>Run</b>，看到绿色 "Success" 即可。</p>
+    <div class="step-box"><code id="sqlText">-- 需在 supabase-setup.sql 中获取完整脚本</code></div>
+    <button class="btn small" onclick="copySql()">复制 SQL 脚本</button>
+  </div>
+
+  <div class="card">
+    <h3>第 4 步 · 填入信息并生成家庭码</h3>
+    <label>Supabase Project URL</label>
+    <input type="text" id="cfgUrl" placeholder="https://xxxx.supabase.co">
+    <label>anon / public key</label>
+    <input type="text" id="cfgKey" placeholder="eyJhbGciOi...">
+    <label>家庭标识码（两台手机填同一个，仅你们自己知道）</label>
+    <input type="text" id="cfgFam" placeholder="如 Love2026">
+    <p class="muted">建议设置不易猜的码（字母+数字混合），它就是你们数据的"钥匙"。</p>
+    <div class="save-bar">
+      <button class="btn primary" style="flex:1" onclick="saveConfig()">保存并开始使用</button>
+      <button class="btn" onclick="testConn()">测试连接</button>
+    </div>
+    <div id="connResult" class="mistake" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<!-- ========== 主界面 ========== -->
+<header>
+  <h1>📔 备孕日志</h1>
+  <span id="syncBadge">连接中…</span>
+  <button class="btn small" onclick="openSettings()">⚙️</button>
+</header>
+
+<div class="date-nav">
+  <button onclick="shiftDate(-1)">‹ 前一天</button>
+  <div class="cur-date" id="curDate">—</div>
+  <button onclick="shiftDate(1)">后一天 ›</button>
+</div>
+
+<!-- 今日概览 -->
+<div class="page" id="page-today">
+  <div class="card">
+    <h3>今日打卡状态</h3>
+    <div id="todaySummary"></div>
+  </div>
+  <div class="card">
+    <h3>体重趋势</h3>
+    <canvas id="weightChart" height="180"></canvas>
+    <div class="summary">
+      <div class="cell"><b id="chartCur">—</b><span>当前体重</span></div>
+      <div class="cell"><b id="chartGoal">50</b><span>目标 ≥50kg</span></div>
+      <div class="cell"><b id="chartDelta">—</b><span>较上周</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>周期与排卵提示</h3>
+    <div id="cycleHint" class="period-banner">周期数据不足，开始记录经期后这里会给出排卵提示。</div>
+  </div>
+</div>
+
+<!-- 体重 -->
+<div class="page" id="page-weight">
+  <div class="card">
+    <h3>体重记录 <span class="state" id="wState">—</span></h3>
+    <p class="muted">固定早晨空腹称重，数据会存入云端同步到两部手机。</p>
+    <label>今日体重（kg）</label>
+    <input type="number" id="wInput" step="0.1" placeholder="如 47.5">
+    <div class="save-bar">
+      <button class="btn primary" style="flex:1" onclick="saveWeight()">保存体重</button>
+      <button class="btn" onclick="fillToday('wInput')">用今天</button>
+    </div>
+    <div class="progress-wrap"><div class="bar" id="wBar" style="width:0%"></div></div>
+    <p class="muted" id="wHint"></p>
+    <div class="note-list" id="wRecent"></div>
+  </div>
+</div>
+
+<!-- 用药 -->
+<div class="page" id="page-med">
+  <div class="card">
+    <h3>用药 / 补充剂打卡 <span class="state" id="mState">—</span></h3>
+    <p class="muted">叶酸必须孕前 3 个月每天不间断，这是打卡最关键的模块。</p>
+    <div class="quick-grid" id="medGrid"></div>
+    <div class="save-bar">
+      <button class="btn primary" style="flex:1" onclick="saveMed()">保存今日用药</button>
+    </div>
+    <div class="note-list" id="medRecent"></div>
+  </div>
+</div>
+
+<!-- 饮食 -->
+<div class="page" id="page-diet">
+  <div class="card">
+    <h3>饮食记录 <span class="state" id="dState">—</span></h3>
+    <p class="muted">目标：每天 1800–2100 kcal，蛋白质 60–75g。点选快速添加或手动输入。</p>
+    <label>餐次</label>
+    <div class="chip-row" id="mealChips"></div>
+    <div class="quick-grid" id="foodQuick"></div>
+    <div class="form-row">
+      <div class="grow"><label>食物 / 备注</label><input type="text" id="dName" placeholder="如 鸡胸肉+米饭"></div>
+      <div style="width:80px"><label>热量</label><input type="number" id="dKcal" placeholder="kcal"></div>
+      <div style="width:80px"><label>蛋白(g)</label><input type="number" id="dPro" placeholder="g"></div>
+    </div>
+    <div class="save-bar">
+      <button class="btn primary" style="flex:1" onclick="addDietItem()">添加</button>
+      <button class="btn" onclick="clearDiet()">清空今日</button>
+    </div>
+    <div class="summary">
+      <div class="cell"><b id="dCalSum">0</b><span>/1800 kcal</span></div>
+      <div class="cell"><b id="dProSum">0</b><span>/60 g 蛋白</span></div>
+      <div class="cell"><b id="dGoalPct">0%</b><span>达标</span></div>
+    </div>
+    <div class="note-list" id="dList"></div>
+  </div>
+</div>
+
+<!-- 周期 -->
+<div class="page" id="page-cycle">
+  <div class="card">
+    <h3>经期记录 <span class="state" id="cState">—</span></h3>
+    <p class="muted">记录经期开始/结束，用于计算周期长度并预测排卵窗口。</p>
+    <label>选择事件</label>
+    <div class="chip-row" id="cycleChips"></div>
+    <div class="save-bar">
+      <button class="btn primary" style="flex:1" onclick="addCycleEvent()">添加记录</button>
+    </div>
+    <div class="note-list" id="cycleRecent"></div>
+  </div>
+  <div class="card">
+    <h3>排卵试纸 / 基础体温</h3>
+    <label>排卵试纸结果</label>
+    <div class="chip-row" id="opkChips"></div>
+    <label>基础体温（℃，晨醒未动时测）</label>
+    <input type="number" id="bbtInput" step="0.1" placeholder="如 36.5">
+    <div class="save-bar">
+      <button class="btn primary" style="flex:1" onclick="saveOpk()">保存</button>
+    </div>
+    <div id="cycleHint2" class="period-banner">—</div>
+  </div>
+</div>
+
+<!-- 同房 -->
+<div class="page" id="page-intimacy">
+  <div class="card">
+    <h3>同房记录 <span class="state" id="iState">—</span></h3>
+    <p class="muted">医生询问时很有用；并会自动标注今天是否在预测排卵窗口内。</p>
+    <div id="intimacyHint" class="period-banner">—</div>
+    <label>备注（可选）</label>
+    <input type="text" id="iNote" placeholder="如 排卵试纸强阳当晚">
+    <div class="save-bar">
+      <button class="btn primary" style="flex:1" onclick="addIntimacy()">记录同房</button>
+      <button class="btn" onclick="removeLastIntimacy()">删除最后一条</button>
+    </div>
+    <div class="note-list" id="iRecent"></div>
+  </div>
+</div>
+
+<!-- 运动 -->
+<div class="page" id="page-exercise">
+  <div class="card">
+    <h3>运动记录 <span class="state" id="eState">—</span></h3>
+    <p class="muted">目标：每周 2–3 次力量训练。控制长时间高强度有氧。</p>
+    <label>类型</label>
+    <div class="chip-row" id="exChips"></div>
+    <div class="form-row">
+      <div class="grow"><label>时长（分钟）</label><input type="number" id="exMin" placeholder="如 45"></div>
+      <div style="width:120px"><label>强度</label><select id="exInt"><option value="轻">轻</option><option value="中" selected>中</option><option value="高">高</option></select></div>
+    </div>
+    <div class="save-bar">
+      <button class="btn primary" style="flex:1" onclick="addExercise()">添加</button>
+    </div>
+    <div class="note-list" id="exRecent"></div>
+  </div>
+</div>
+
+<!-- 睡眠 -->
+<div class="page" id="page-sleep">
+  <div class="card">
+    <h3>睡眠记录 <span class="state" id="sState">—</span></h3>
+    <p class="muted">目标 7–8 小时。睡眠不足会影响食欲与激素，是增重停滞的隐藏原因。</p>
+    <label>睡眠时长（小时）</label>
+    <input type="number" id="sleepH" step="0.5" placeholder="如 7.5">
+    <label>睡眠质量</label>
+    <div class="chip-row" id="sleepQChips"></div>
+    <div class="save-bar">
+      <button class="btn primary" style="flex:1" onclick="saveSleep()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 情绪 -->
+<div class="page" id="page-mood">
+  <div class="card">
+    <h3>情绪与症状 <span class="state" id="moState">—</span></h3>
+    <p class="muted">压力直接抑制排卵。记录情绪和身体症状，能帮你们和医生发现规律。</p>
+    <label>今日情绪</label>
+    <div class="chip-row" id="moodChips"></div>
+    <label>身体症状（可多选）</label>
+    <div class="chip-row" id="symChips"></div>
+    <label>备注</label>
+    <textarea id="moNote" rows="2" placeholder="如 今天有点焦虑，腹部偶有坠感"></textarea>
+    <div class="save-bar">
+      <button class="btn primary" style="flex:1" onclick="saveMood()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 报表 -->
+<div class="page" id="page-report">
+  <div class="card">
+    <h3>月报表 <span id="repMonthLabel"></span></h3>
+    <div class="summary">
+      <div class="cell"><b id="rAvgW">—</b><span>月均体重</span></div>
+      <div class="cell"><b id="rDeltaW">—</b><span>月变化</span></div>
+      <div class="cell"><b id="rFolic">—</b><span>叶酸达标率</span></div>
+    </div>
+    <div class="summary">
+      <div class="cell"><b id="rCalAvg">—</b><span>日均热量</span></div>
+      <div class="cell"><b id="rProAvg">—</b><span>日均蛋白</span></div>
+      <div class="cell"><b id="rExWk">—</b><span>平均训练/周</span></div>
+    </div>
+    <div class="summary">
+      <div class="cell"><b id="rSleep">—</b><span>日均睡眠</span></div>
+      <div class="cell"><b id="rCycle">—</b><span>平均周期</span></div>
+      <div class="cell"><b id="rIntimacy">—</b><span>同房/月</span></div>
+    </div>
+    <p class="muted" id="rFertile"></p>
+  </div>
+  <div class="card">
+    <h3>数据管理</h3>
+    <p class="muted">导出为 JSON 文件备份，或从备份恢复（会与云端合并）。</p>
+    <div class="save-bar">
+      <button class="btn" onclick="exportData()">📤 导出备份</button>
+      <button class="btn" onclick="document.getElementById('importFile').click()">📥 导入恢复</button>
+      <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
+    </div>
+    <div class="save-bar" style="margin-top:8px">
+      <button class="btn" onclick="forceSync()">🔄 立即同步</button>
+      <button class="btn" onclick="switchFamily()">切换家庭码</button>
+    </div>
+  </div>
+</div>
+
+<footer>备孕日志 · 数据保存在 Supabase 云端 + 本机缓存 · 仅供家庭自学使用</footer>
+
+<!-- 底部导航 -->
+<nav class="tabbar" id="tabbar"></nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+/* ================= 配置与状态 ================= */
+const LS_CFG = 'pt_config';
+const LS_DATA = 'pt_data_';
+let config = null;
+let supabase = null;
+let cache = {};        // { '2026-08-10': { weight:{kg,ts}, ... } }
+let pending = [];      // [{d, t, data}] 待同步
+let currentDate = todayStr();
+let selectedTab = 'today';
+let online = navigator.onLine;
+
+const SUPPLEMENTS = [
+  {id:'folic', name:'叶酸', dose:'400–800µg'},
+  {id:'iron', name:'铁', dose:'~20mg'},
+  {id:'vitd', name:'维生素D', dose:'400–800IU'},
+  {id:'dha', name:'DHA', dose:'≥200mg'},
+];
+const MEALS = ['早餐','加餐1','午餐','加餐2','晚餐'];
+const FOOD_PRESETS = [
+  {n:'鸡胸/瘦肉', k:180, p:28},{n:'鸡蛋2个', k:160, p:13},{n:'鱼/三文鱼', k:220, p:22},
+  {n:'米饭1碗', k:230, p:4},{n:'全麦面包2片', k:160, p:6},{n:'红薯/玉米', k:130, p:3},
+  {n:'牛奶1杯', k:150, p:8},{n:'酸奶1杯', k:140, p:5},{n:'豆浆', k:90, p:7},
+  {n:'坚果一把', k:150, p:5},{n:'牛油果', k:160, p:2},{n:'香蕉', k:100, p:1},
+  {n:'蛋白粉+奶', k:220, p:25},{n:'花生酱吐司', k:220, p:6},{n:'燕麦片', k:150, p:5},
+];
+const EX_TYPES = ['力量训练','有氧','瑜伽/普拉提','核心训练','快走','游泳'];
+const SLEEP_QUAL = ['很差','差','一般','好','很好'];
+const MOODS = ['😖很差','😟差','😐一般','🙂好','😄很好'];
+const SYMPTOMS = ['腹痛','腰酸','恶心','乏力','白带异常','头痛','情绪波动','失眠','食欲不振','腹胀'];
+
+function todayStr(){ const d=new Date(); return fmtDate(d); }
+function fmtDate(d){ const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0'); const dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; }
+function parseDate(s){ return new Date(s+'T00:00:00'); }
+function shiftDate(n){ const d=parseDate(currentDate); d.setDate(d.getDate()+n); currentDate=fmtDate(d); render(); }
+function humanDate(s){ const d=parseDate(s); const wd=['日','一','二','三','四','五','六'][d.getDay()]; return `${s} 周${wd}${s===todayStr()?' · 今天':''}`; }
+
+/* ================= 存储层（本地 + 云端） ================= */
+function loadConfig(){ try{ config=JSON.parse(localStorage.getItem(LS_CFG)); }catch(e){ config=null; } }
+function saveConfigLocal(){ localStorage.setItem(LS_CFG, JSON.stringify(config)); }
+function loadCache(){ try{ cache=JSON.parse(localStorage.getItem(LS_DATA+config.family)) || {}; }catch(e){ cache={}; } }
+function saveCacheLocal(){ localStorage.setItem(LS_DATA+config.family, JSON.stringify(cache)); }
+function initSupabase(){
+  if(!config) return;
+  try{ supabase = window.supabase.createClient(config.url, config.key); }
+  catch(e){ supabase=null; }
+}
+
+function getRec(d,t){ return cache[d] && cache[d][t] || null; }
+function setRec(d,t,data){
+  cache[d] = cache[d] || {};
+  cache[d][t] = { data, ts: Date.now() };
+  pending.push({ d, t, data, ts: Date.now() });
+  saveCacheLocal();
+  scheduleSync();
+}
+function delRec(d,t){ if(cache[d]) delete cache[d][t]; saveCacheLocal(); scheduleSync(); }
+
+/* 云端同步 */
+let syncTimer=null;
+function scheduleSync(){ clearTimeout(syncTimer); syncTimer=setTimeout(syncNow, 800); }
+async function syncNow(){
+  setSyncBadge('syncing','同步中…');
+  if(!config || !supabase){ setSyncBadge('off','未连接'); return; }
+  if(!online){ setSyncBadge('off','离线'); return; }
+  try{
+    // 1. 推送待同步
+    while(pending.length){
+      const batch = pending.splice(0, 25);
+      const rows = batch.map(x=>({
+        family_id: config.family,
+        record_date: x.d,
+        record_type: x.t,
+        data: JSON.parse(JSON.stringify(x.data)),
+        updated_at: new Date(x.ts).toISOString(),
+      }));
+      const { error } = await supabase.from('daily_records').upsert(rows, { onConflict:'family_id,record_date,record_type' });
+      if(error){ pending.unshift(...batch); throw error; }
+    }
+    // 2. 拉取远端（最近 120 天）
+    const start = fmtDate(addDays(new Date(), -120));
+    const { data, error } = await supabase
+      .from('daily_records').select('record_date,record_type,data,updated_at')
+      .eq('family_id', config.family).gte('record_date', start);
+    if(error) throw error;
+    if(data){
+      for(const row of data){
+        const rt = new Date(row.updated_at).getTime();
+        const local = cache[row.record_date] && cache[row.record_date][row.record_type];
+        if(!local || rt > local.ts){
+          cache[row.record_date] = cache[row.record_date] || {};
+          cache[row.record_date][row.record_type] = { data: row.data, ts: rt };
+        }
+      }
+      saveCacheLocal();
+    }
+    setSyncBadge('done','已同步 '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}));
+  }catch(e){
+    setSyncBadge('off','同步失败');
+    console.warn('sync error', e);
+  }
+}
+function setSyncBadge(cls,txt){ const b=document.getElementById('syncBadge'); b.className=cls; b.textContent=txt; }
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function forceSync(){ syncNow(); }
+
+/* ================= 渲染 ================= */
+function render(){
+  document.getElementById('curDate').textContent = humanDate(currentDate);
+  renderToday();
+  renderWeight();
+  renderMed();
+  renderDiet();
+  renderCycle();
+  renderIntimacy();
+  renderExercise();
+  renderSleep();
+  renderMood();
+  renderReport();
+}
+
+function switchPage(tab){
+  selectedTab = tab;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===tab));
+}
+
+/* 今日概览 */
+function renderToday(){
+  const d = currentDate;
+  const items = [
+    {k:'weight', ok:!!getRec(d,'weight'), label:'体重'},
+    {k:'med', ok:medAllDone(d), label:'用药'},
+    {k:'diet', ok:dietCalOk(d), label:'饮食'},
+    {k:'cycle', ok:!!getRec(d,'cycle'), label:'周期'},
+    {k:'intimacy', ok:!!getRec(d,'intimacy'), label:'同房'},
+    {k:'exercise', ok:!!getRec(d,'exercise'), label:'运动'},
+    {k:'sleep', ok:!!getRec(d,'sleep'), label:'睡眠'},
+    {k:'mood', ok:!!getRec(d,'mood'), label:'情绪'},
+  ];
+  document.getElementById('todaySummary').innerHTML = items.map(it=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--border)">
+      <span style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;background:${it.ok?'#e2f5e9':'var(--surface2)'}">${it.ok?'✅':'⬜'}</span>
+      <span style="flex:1">${it.label}</span>
+      <span class="pill ${it.ok?'green':'yellow'}">${it.ok?'已记录':'未记录'}</span>
+    </div>`).join('');
+}
+
+/* ================= 体重 ================= */
+function renderWeight(){
+  const r = getRec(currentDate,'weight');
+  document.getElementById('wInput').value = r ? r.data.kg : '';
+  const st = document.getElementById('wState');
+  if(r){ st.textContent = r.data.kg+' kg'; st.className='state ok'; }
+  else { st.textContent='未记录'; st.className='state miss'; }
+  // 最近7天
+  const days=[];
+  for(let i=6;i>=0;i--){ days.push(fmtDate(addDays(new Date(),-i))); }
+  const recs = days.map(dd=>({d:dd, r:getRec(dd,'weight')})).filter(x=>x.r);
+  document.getElementById('wRecent').innerHTML = recs.length
+    ? recs.map(x=>`<div class="note-item"><span>${x.d}</span><b>${x.r.data.kg} kg</b></div>`).join('')
+    : '<div class="note-item">最近 7 天暂无记录</div>';
+  // 目标条
+  const cur = r ? r.data.kg : 0;
+  const pct = cur ? Math.min(100, (cur-40)/15*100) : 0;
+  document.getElementById('wBar').style.width = pct+'%';
+  document.getElementById('wHint').textContent = r ? (r.data.kg>=50 ? '✅ 已达到 50kg 目标线，继续保持！' : `还差 ${(50-r.data.kg).toFixed(1)}kg 达到 50kg 目标`) : '输入今日体重开始记录';
+  drawWeightChart();
+}
+function saveWeight(){
+  const v=parseFloat(document.getElementById('wInput').value);
+  if(!v || v<30 || v>150){ alert('请输入合理的体重（30–150kg）'); return; }
+  setRec(currentDate,'weight',{kg:v});
+  renderWeight(); renderToday();
+}
+function fillToday(id){ document.getElementById(id).value=''; }
+
+/* 体重图表 */
+function drawWeightChart(){
+  const cv=document.getElementById('weightChart'); const ctx=cv.getContext('2d');
+  const W=cv.clientWidth||cv.offsetWidth||300; const H=180;
+  cv.width=W; cv.height=H;
+  ctx.clearRect(0,0,W,H);
+  const pts=[];
+  for(let i=60;i>=0;i--){
+    const d=fmtDate(addDays(new Date(),-i));
+    const r=getRec(d,'weight'); if(r) pts.push({d, kg:r.data.kg});
+  }
+  if(!pts.length){
+    ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--muted');
+    ctx.font='13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('暂无数据，开始记录后这里会显示趋势', W/2, H/2);
+    return;
+  }
+  const vals=pts.map(p=>p.kg);
+  const lo=Math.min(...vals, 46)-1, hi=Math.max(...vals, 51)+1;
+  const pad=30;
+  const X=i=>pad+(W-pad*2)*i/(pts.length-1);
+  const Y=v=>H-20-(H-40)*(v-lo)/(hi-lo);
+  // 目标线
+  ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--good');
+  ctx.setLineDash([5,4]); ctx.beginPath();
+  ctx.moveTo(0,Y(50)); ctx.lineTo(W,Y(50)); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='#16a34a'; ctx.font='11px sans-serif'; ctx.fillText('目标 50kg', W-60, Y(50)-4);
+  // 折线
+  ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--accent');
+  ctx.lineWidth=2; ctx.beginPath();
+  pts.forEach((p,i)=>{ i?ctx.lineTo(X(i),Y(p.kg)):ctx.moveTo(X(i),Y(p.kg)); });
+  ctx.stroke();
+  // 点
+  pts.forEach((p,i)=>{
+    ctx.fillStyle='#e11d48'; ctx.beginPath(); ctx.arc(X(i),Y(p.kg),3,0,Math.PI*2); ctx.fill();
+  });
+  // 轴
+  ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--muted');
+  ctx.font='10px sans-serif';
+  ctx.fillText(lo.toFixed(1)+'kg', 4, H-14);
+  ctx.fillText(hi.toFixed(1)+'kg', 4, 14);
+  const last=pts[pts.length-1].kg;
+  ctx.textAlign='center'; ctx.fillText('最近：'+last.toFixed(1)+'kg', W/2, H-2);
+  // 汇总
+  document.getElementById('chartCur').textContent = last.toFixed(1)+'kg';
+  const wk=pts.filter(p=>p.d>=fmtDate(addDays(new Date(),-7)));
+  document.getElementById('chartDelta').textContent = wk.length>=2 ? (last-wk[0].kg>=0?'+':'')+(last-wk[0].kg).toFixed(1)+'kg' : '—';
+}
+
+/* ================= 用药 ================= */
+function medAllDone(d){
+  const r=getRec(d,'med'); if(!r) return false;
+  return SUPPLEMENTS.every(s=>r.data.items[s.id]);
+}
+function renderMed(){
+  const r=getRec(currentDate,'med');
+  const st=document.getElementById('mState');
+  if(r){ const n=SUPPLEMENTS.filter(s=>r.data.items[s.id]).length;
+    st.textContent=n+'/'+SUPPLEMENTS.length+' 项已服'; st.className='state '+(n===SUPPLEMENTS.length?'ok':'miss'); }
+  else { st.textContent='未打卡'; st.className='state miss'; }
+  const items = r ? r.data.items : {};
+  document.getElementById('medGrid').innerHTML = SUPPLEMENTS.map(s=>`
+    <div class="chip ${items[s.id]?'active':''}" onclick="toggleMed('${s.id}')">${s.name}<br><small style="font-size:10px">${s.dose}</small></div>
+  `).join('');
+  // 最近7天叶酸
+  const days=[];
+  for(let i=6;i>=0;i--){ days.push(fmtDate(addDays(new Date(),-i))); }
+  const recs=days.map(dd=>{const x=getRec(dd,'med'); return {d:dd, ok:x&&x.data.items.folic};});
+  document.getElementById('medRecent').innerHTML =
+    '<div class="note-item"><span>近7天叶酸</span><span>'+recs.map(x=>`<span class="pill ${x.ok?'green':'red'}" style="margin:0 2px">${x.ok?'✓':'✗'}</span>`).join('')+'</span></div>'
+    + `<div class="note-item"><span>漏服提醒</span><b>${recs.filter(x=>!x.ok).length} 天未服</b></div>`;
+}
+let medPending=null;
+function toggleMed(id){
+  const r=getRec(currentDate,'med');
+  const items = r ? JSON.parse(JSON.stringify(r.data.items)) : {};
+  if(!items[id]) items[id]=true; else delete items[id];
+  setRec(currentDate,'med',{items});
+  renderMed(); renderToday();
+}
+function saveMed(){ renderMed(); renderToday(); }
+
+/* ================= 饮食 ================= */
+function dietCalOk(d){
+  const r=getRec(d,'diet'); if(!r) return false;
+  const cal=sumDiet(r.data.items);
+  return cal>=1600;
+}
+function sumDiet(items){ let c=0,p=0; (items||[]).forEach(i=>{c+=i.kcal||0;p+=i.pro||0}); return {c,p}; }
+let curMeal=MEALS[0];
+function renderDiet(){
+  const r=getRec(currentDate,'diet');
+  const items = r ? r.data.items : [];
+  const {c,p}=sumDiet(items);
+  document.getElementById('dCalSum').textContent=c;
+  document.getElementById('dProSum').textContent=p;
+  const pct=Math.min(100,Math.round(c/1800*100));
+  document.getElementById('dGoalPct').textContent=pct+'%';
+  const st=document.getElementById('dState');
+  if(c>=1800&&p>=60){st.textContent='目标达成';st.className='state ok';}
+  else if(c>=1200){st.textContent='进行中';st.className='state miss';}
+  else {st.textContent='未达标';st.className='state miss';}
+  // 餐次 chips
+  document.getElementById('mealChips').innerHTML=MEALS.map(m=>`<span class="chip ${m===curMeal?'active':''}" onclick="curMeal='${m}';renderDiet()">${m}</span>`).join('');
+  // 快捷食物
+  document.getElementById('foodQuick').innerHTML=FOOD_PRESETS.map((f,i)=>`<span class="chip" onclick="quickFood(${i})">${f.n}<br><small style="font-size:10px">${f.k}kcal</small></span>`).join('');
+  // 列表
+  document.getElementById('dList').innerHTML = items.length
+    ? items.map((it,i)=>`<div class="note-item"><span>${it.meal} · ${it.name}</span><span>${it.kcal}kcal · ${it.pro}g <span class="del" onclick="delDietItem(${i})">✕</span></span></div>`).join('')
+    : '<div class="note-item">今日暂无饮食记录</div>';
+}
+function quickFood(i){
+  const f=FOOD_PRESETS[i];
+  setRec(currentDate,'diet',{items:[...(getRec(currentDate,'diet')?.data.items||[]), {meal:curMeal,name:f.n,kcal:f.k,pro:f.p}]});
+  renderDiet(); renderToday();
+}
+function addDietItem(){
+  const name=document.getElementById('dName').value.trim();
+  const k=parseFloat(document.getElementById('dKcal').value)||0;
+  const pr=parseFloat(document.getElementById('dPro').value)||0;
+  if(!name){ alert('请输入食物名称'); return; }
+  const items=[...(getRec(currentDate,'diet')?.data.items||[]), {meal:curMeal,name,kcal:k,pro:pr}];
+  setRec(currentDate,'diet',{items});
+  document.getElementById('dName').value=''; document.getElementById('dKcal').value=''; document.getElementById('dPro').value='';
+  renderDiet(); renderToday();
+}
+function delDietItem(i){
+  const items=[...(getRec(currentDate,'diet')?.data.items||[])]; items.splice(i,1);
+  setRec(currentDate,'diet',{items});
+  renderDiet(); renderToday();
+}
+function clearDiet(){
+  if(!confirm('确定清空今日所有饮食记录？')) return;
+  setRec(currentDate,'diet',{items:[]});
+  renderDiet(); renderToday();
+}
+
+/* ================= 周期 / 排卵 ================= */
+function getPeriodEvents(){
+  const evs=[];
+  for(const d in cache){
+    const r=cache[d]['cycle']; if(r&&r.data.events){ r.data.events.forEach(e=>evs.push({d,...e})); }
+  }
+  return evs.sort((a,b)=>a.d.localeCompare(b.d));
+}
+function cycleStats(){
+  const evs=getPeriodEvents();
+  const starts=evs.filter(e=>e.type==='start').map(e=>e.d);
+  let avgLen=28, lastStart=null;
+  if(starts.length>=2){
+    let sum=0;
+    for(let i=1;i<starts.length;i++){ sum+=daysBetween(starts[i-1],starts[i]); }
+    avgLen=Math.round(sum/(starts.length-1));
+  }
+  lastStart = starts.length?starts[starts.length-1]:null;
+  return {avgLen, lastStart, starts};
+}
+function daysBetween(a,b){ return Math.round((parseDate(b)-parseDate(a))/86400000); }
+function predictFertile(){
+  const {avgLen, lastStart, starts}=cycleStats();
+  if(!lastStart){
+    return {text:'记录 1–2 次经期开始日后，这里会预测排卵窗口与下次经期。', fertileDays:[]};
+  }
+  const ovuIdx = Math.max(14, avgLen-14);
+  const ovuDate = addDays(parseDate(lastStart), ovuIdx);
+  const nextPeriod = addDays(parseDate(lastStart), avgLen);
+  const fertileDays=[];
+  for(let i=0;i<=5;i++){ fertileDays.push(fmtDate(addDays(ovuDate,i-3))); }
+  const today=todayStr();
+  const inWin = fertileDays.includes(today);
+  const remaining = Math.round((parseDate(ovuDate)-parseDate(today))/86400000);
+  const text = `周期约 ${avgLen} 天 · 预计排卵日 ${fmtDate(ovuDate)} · 排卵窗口 ${fertileDays[0]} ~ ${fertileDays[fertileDays.length-1]}` +
+    (inWin?'\n📍 今天在排卵窗口内，是受孕好时机！':(remaining>0?`\n距预计排卵还有 ${remaining} 天`:''));
+  return {text, fertileDays};
+}
+function renderCycle(){
+  const evs=getPeriodEvents().filter(e=>e.d===currentDate);
+  const st=document.getElementById('cState');
+  st.textContent = evs.length ? evs.map(e=>e.type==='start'?'经期开始':'经期结束').join('、') : '未记录';
+  st.className = evs.length?'state ok':'state miss';
+  const days=[];
+  for(let i=20;i>=0;i--){ days.push(fmtDate(addDays(new Date(),-i))); }
+  const rows=days.map(dd=>{
+    const r=getRec(dd,'cycle');
+    const es=r?r.data.events:null;
+    return {d:dd, es};
+  }).filter(x=>x.es&&x.es.length);
+  document.getElementById('cycleRecent').innerHTML = rows.length
+    ? rows.map(x=>`<div class="note-item"><span>${x.d}</span><span>${x.es.map(e=>e.type==='start'?'🩸开始':'◼︎结束').join(' ')}</span></div>`).join('')
+    : '<div class="note-item">暂无经期记录</div>';
+  // 事件chips
+  document.getElementById('cycleChips').innerHTML = ['经期开始','经期结束'].map((m,i)=>`<span class="chip ${cycleSel===i?'active':''}" onclick="cycleSel=${i};renderCycle()">${m}</span>`).join('');
+  // 预测
+  const fp=predictFertile();
+  document.getElementById('cycleHint').textContent=fp.text;
+  if(fp.fertileDays.length){
+    document.getElementById('cycleHint2').innerHTML =
+      '<b>📅 排卵窗口</b><br>'+fp.fertileDays.map(x=>`<span class="pill ${x===todayStr()?'red':'green'}">${x}${x===todayStr()?' (今天)':''}</span>`).join('');
+  } else {
+    document.getElementById('cycleHint2').innerHTML=fp.text;
+  }
+  renderOpk();
+}
+let cycleSel=0;
+function addCycleEvent(){
+  const type = cycleSel===0?'start':'end';
+  const cur=getRec(currentDate,'cycle');
+  const events = cur ? JSON.parse(JSON.stringify(cur.data.events||[])) : [];
+  events.push({type, ts:Date.now()});
+  setRec(currentDate,'cycle',{events});
+  renderCycle(); renderToday();
+}
+/* 排卵试纸 */
+let opkSel=null;
+function renderOpk(){
+  const r=getRec(currentDate,'opk');
+  const val = r?r.data.test:null;
+  document.getElementById('opkChips').innerHTML = ['阴性','弱阳','强阳'].map((m,i)=>{
+    const v=['neg','weak','pos'][i];
+    return `<span class="chip ${val===v?'active':''}" onclick="opkSel='${v}';saveOpk()">${m}</span>`;
+  }).join('');
+  const bbt=r&&r.data.bbt?r.data.bbt:'';
+  document.getElementById('bbtInput').value=bbt;
+}
+function saveOpk(){
+  const r=getRec(currentDate,'opk');
+  const data = r ? JSON.parse(JSON.stringify(r.data)) : {};
+  if(opkSel) data.test=opkSel;
+  const bbt=parseFloat(document.getElementById('bbtInput').value);
+  if(bbt) data.bbt=bbt;
+  setRec(currentDate,'opk',{...data});
+  renderOpk(); renderToday();
+}
+
+/* ================= 同房 ================= */
+function renderIntimacy(){
+  const r=getRec(currentDate,'intimacy');
+  const items = r?r.data.items:[];
+  const st=document.getElementById('iState');
+  st.textContent = items.length ? items.length+' 次' : '未记录';
+  st.className = items.length?'state ok':'state miss';
+  const fp=predictFertile();
+  const inWin = fp.fertileDays.includes(currentDate);
+  document.getElementById('intimacyHint').innerHTML = inWin
+    ? '📍 <b>今天在预测排卵窗口内</b>——受孕机率高，可安排同房。'
+    : (fp.text.includes('不足')?fp.text:'今天不在预测窗口内，但精子可存活 3–5 天，窗口前后 1–2 天同房同样有效。');
+  document.getElementById('iRecent').innerHTML = items.length
+    ? items.map((it,i)=>`<div class="note-item"><span>${currentDate} ${it.time||''}</span><span>${it.note||'同房'} <span class="del" onclick="removeIntimacy(${i})">✕</span></span></div>`).join('')
+    : '<div class="note-item">今日暂无记录</div>';
+}
+function addIntimacy(){
+  const note=document.getElementById('iNote').value.trim();
+  const items=[...(getRec(currentDate,'intimacy')?.data.items||[]), {note:note||'同房', time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}];
+  setRec(currentDate,'intimacy',{items});
+  document.getElementById('iNote').value='';
+  renderIntimacy(); renderToday();
+}
+function removeIntimacy(i){
+  const items=[...(getRec(currentDate,'intimacy')?.data.items||[])]; items.splice(i,1);
+  setRec(currentDate,'intimacy',{items});
+  renderIntimacy(); renderToday();
+}
+function removeLastIntimacy(){
+  const items=[...(getRec(currentDate,'intimacy')?.data.items||[])]; if(!items.length) return;
+  items.pop(); setRec(currentDate,'intimacy',{items}); renderIntimacy(); renderToday();
+}
+
+/* ================= 运动 ================= */
+let curEx=EX_TYPES[0];
+function renderExercise(){
+  const r=getRec(currentDate,'exercise');
+  const items=r?r.data.items:[];
+  const st=document.getElementById('eState');
+  st.textContent=items.length?items.map(x=>x.type).join('、'):'未记录';
+  st.className=items.length?'state ok':'state miss';
+  document.getElementById('exChips').innerHTML=EX_TYPES.map(t=>`<span class="chip ${t===curEx?'active':''}" onclick="curEx='${t}';renderExercise()">${t}</span>`).join('');
+  document.getElementById('exRecent').innerHTML=items.length
+    ? items.map((it,i)=>`<div class="note-item"><span>${it.type} · ${it.min}min · ${it.int}</span><span class="del" onclick="delEx(${i})">✕</span></div>`).join('')
+    : '<div class="note-item">今日暂无运动</div>';
+}
+function addExercise(){
+  const min=parseInt(document.getElementById('exMin').value);
+  if(!min||min<=0){alert('请输入时长');return;}
+  const int=document.getElementById('exInt').value;
+  const items=[...(getRec(currentDate,'exercise')?.data.items||[]),{type:curEx,min,int}];
+  setRec(currentDate,'exercise',{items});
+  document.getElementById('exMin').value='';
+  renderExercise(); renderToday();
+}
+function delEx(i){
+  const items=[...(getRec(currentDate,'exercise')?.data.items||[])]; items.splice(i,1);
+  setRec(currentDate,'exercise',{items});
+  renderExercise(); renderToday();
+}
+
+/* ================= 睡眠 ================= */
+let sleepQ=2;
+function renderSleep(){
+  const r=getRec(currentDate,'sleep');
+  const st=document.getElementById('sState');
+  if(r){ st.textContent=r.data.hours+'h'; st.className=r.data.hours>=7?'state ok':'state miss'; }
+  else { st.textContent='未记录'; st.className='state miss'; }
+  document.getElementById('sleepH').value = r?r.data.hours:'';
+  sleepQ = r?r.data.q:2;
+  document.getElementById('sleepQChips').innerHTML=SLEEP_QUAL.map((m,i)=>`<span class="chip ${i===sleepQ?'active':''}" onclick="sleepQ=${i};renderSleep()">${m}</span>`).join('');
+}
+function saveSleep(){
+  const h=parseFloat(document.getElementById('sleepH').value);
+  if(!h||h<=0){alert('请输入睡眠时长');return;}
+  setRec(currentDate,'sleep',{hours:h,q:sleepQ});
+  renderSleep(); renderToday();
+}
+
+/* ================= 情绪与症状 ================= */
+let moodSel=3, symSel={};
+function renderMood(){
+  const r=getRec(currentDate,'mood');
+  const st=document.getElementById('moState');
+  if(r){ st.textContent=MOODS[r.data.mood]||'已记录'; st.className='state ok'; }
+  else { st.textContent='未记录'; st.className='state miss'; }
+  if(r){ moodSel=r.data.mood; symSel={}; r.data.sym.forEach(s=>symSel[s]=true); document.getElementById('moNote').value=r.data.note||''; }
+  document.getElementById('moodChips').innerHTML=MOODS.map((m,i)=>`<span class="chip ${i===moodSel?'active':''}" onclick="moodSel=${i};renderMood()">${m}</span>`).join('');
+  document.getElementById('symChips').innerHTML=SYMPTOMS.map(s=>`<span class="chip ${symSel[s]?'active':''}" onclick="toggleSym('${s}')">${s}</span>`).join('');
+}
+function toggleSym(s){ symSel[s]=!symSel[s]; renderMood(); }
+function saveMood(){
+  const note=document.getElementById('moNote').value.trim();
+  const sym=Object.keys(symSel).filter(s=>symSel[s]);
+  setRec(currentDate,'mood',{mood:moodSel,sym,note});
+  renderMood(); renderToday();
+}
+
+/* ================= 报表 ================= */
+function renderReport(){
+  const m=d=new Date(); const ym=m.getFullYear()+'-'+String(m.getMonth()+1).padStart(2,'0');
+  document.getElementById('repMonthLabel').textContent=' · '+ym;
+  const monthDays=[];
+  for(let i=0;i<31;i++){
+    const d=addDays(new Date(m.getFullYear(),m.getMonth(),1), i);
+    if(d.getMonth()!==m.getMonth()) break;
+    monthDays.push(fmtDate(d));
+  }
+  const wRecs=monthDays.map(dd=>getRec(dd,'weight')?.data.kg).filter(x=>x);
+  document.getElementById('rAvgW').textContent = wRecs.length? (wRecs.reduce((a,b)=>a+b,0)/wRecs.length).toFixed(1)+'kg' : '—';
+  document.getElementById('rDeltaW').textContent = wRecs.length>=2 ? (wRecs[wRecs.length-1]-wRecs[0]>=0?'+':'')+(wRecs[wRecs.length-1]-wRecs[0]).toFixed(1)+'kg' : '—';
+  const folicDays=monthDays.filter(dd=>{const x=getRec(dd,'med');return x&&x.data.items.folic;}).length;
+  document.getElementById('rFolic').textContent = Math.round(folicDays/monthDays.length*100)+'%';
+  const calS=monthDays.map(dd=>sumDiet(getRec(dd,'diet')?.data.items||[]).c).filter(c=>c>0);
+  const proS=monthDays.map(dd=>sumDiet(getRec(dd,'diet')?.data.items||[]).p).filter(p=>p>0);
+  document.getElementById('rCalAvg').textContent = calS.length?Math.round(calS.reduce((a,b)=>a+b,0)/calS.length):'—';
+  document.getElementById('rProAvg').textContent = proS.length?Math.round(proS.reduce((a,b)=>a+b,0)/proS.length)+'g':'—';
+  const exWeeks=4, exCount=Object.keys(cache).filter(d=>d.slice(0,7)===ym&&cache[d]['exercise']).length;
+  document.getElementById('rExWk').textContent=(exCount/exWeeks).toFixed(1)+'次';
+  const slp=monthDays.map(dd=>getRec(dd,'sleep')?.data.hours).filter(x=>x);
+  document.getElementById('rSleep').textContent=slp.length?(slp.reduce((a,b)=>a+b,0)/slp.length).toFixed(1)+'h':'—';
+  const cs=cycleStats();
+  document.getElementById('rCycle').textContent = cs.starts.length>=2?cs.avgLen+'天':(cs.starts.length?'记录中':'—');
+  const inCnt=Object.keys(cache).filter(d=>d.slice(0,7)===ym&&cache[d]['intimacy']).length;
+  document.getElementById('rIntimacy').textContent=inCnt+'次';
+  const fp=predictFertile();
+  document.getElementById('rFertile').textContent=fp.text;
+}
+
+/* ================= 导出/导入 ================= */
+function exportData(){
+  const blob=new Blob([JSON.stringify({cfg:config, cache, exported:new Date().toISOString()},null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='备孕记录备份_'+todayStr()+'.json'; a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importData(e){
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const j=JSON.parse(rd.result);
+      if(!j.cache) throw new Error('格式错误');
+      for(const d in j.cache){ for(const t in j.cache[d]){ const v=j.cache[d][t]; cache[d]=cache[d]||{}; cache[d][t]={data:v.data,ts:v.ts||Date.now()}; } }
+      saveCacheLocal(); scheduleSync(); render();
+      alert('导入成功，正在同步…');
+    }catch(err){ alert('导入失败：'+err.message); }
+  };
+  rd.readAsText(f);
+  e.target.value='';
+}
+
+/* ================= 配置 ================= */
+function openSettings(){
+  if(!config){ document.getElementById('setupPage').classList.remove('hidden'); return; }
+  if(confirm('重新配置或切换家庭码？')){ document.getElementById('setupPage').classList.remove('hidden'); }
+}
+function copySql(){
+  const url='https://raw.githubusercontent.com/JK-Solution/pregnancy-tracker/main/supabase-setup.sql';
+  fetch(url).then(r=>r.text()).then(t=>{ navigator.clipboard.writeText(t); alert('SQL 已复制，粘贴到 Supabase SQL Editor 并运行'); })
+    .catch(()=>{ alert('自动获取失败，请打开 GitHub 仓库中的 supabase-setup.sql 复制'); });
+}
+async function testConn(){
+  const url=document.getElementById('cfgUrl').value.trim().replace(/\/$/,'');
+  const key=document.getElementById('cfgKey').value.trim();
+  const box=document.getElementById('connResult');
+  if(!url||!key){ box.textContent='请先填写 URL 和 key'; return; }
+  box.textContent='测试中…';
+  try{
+    const c=window.supabase.createClient(url,key);
+    const {error}=await c.from('daily_records').select('*').limit(1);
+    if(error && error.code==='PGRST205'){ box.textContent='✅ 连接成功，但数据表未创建。请先到 SQL Editor 运行建表脚本，再点"保存并开始使用"。'; return; }
+    if(error){ box.textContent='⚠️ '+error.message; return; }
+    box.textContent='✅ 连接成功！数据表就绪，点"保存并开始使用"。';
+  }catch(err){ box.textContent='❌ 连接失败：'+err.message; }
+}
+function saveConfig(){
+  const url=document.getElementById('cfgUrl').value.trim().replace(/\/$/,'');
+  const key=document.getElementById('cfgKey').value.trim();
+  const family=document.getElementById('cfgFam').value.trim();
+  if(!url||!key||!family){ alert('请完整填写三项信息'); return; }
+  if(!/^https:\/\/.+/.test(url)){ alert('URL 格式应为 https://xxxx.supabase.co'); return; }
+  config={url,key,family};
+  saveConfigLocal();
+  loadCache();
+  initSupabase();
+  document.getElementById('setupPage').classList.add('hidden');
+  buildTabs(); render(); syncNow();
+  alert('配置完成！两台手机填相同信息即可共享数据。');
+}
+function switchFamily(){
+  if(confirm('切换家庭码会读取该码对应的数据。确定继续？')){
+    config=null; localStorage.removeItem(LS_CFG);
+    document.getElementById('setupPage').classList.remove('hidden');
+  }
+}
+
+/* ================= 底部导航 ================= */
+const TABS=[
+  {id:'today', ico:'🏠', label:'今日'},
+  {id:'weight', ico:'⚖️', label:'体重'},
+  {id:'med', ico:'💊', label:'用药'},
+  {id:'diet', ico:'🍚', label:'饮食'},
+  {id:'cycle', ico:'📅', label:'周期'},
+  {id:'intimacy', ico:'💞', label:'同房'},
+  {id:'exercise', ico:'🏋️', label:'运动'},
+  {id:'sleep', ico:'😴', label:'睡眠'},
+  {id:'mood', ico:'🌤️', label:'心情'},
+  {id:'report', ico:'📊', label:'报表'},
+];
+function buildTabs(){
+  document.getElementById('tabbar').innerHTML=TABS.map(t=>`<button class="tab ${t.id===selectedTab?'active':''}" data-tab="${t.id}" onclick="switchPage('${t.id}')"><span class="ico">${t.ico}</span>${t.label}</button>`).join('');
+}
+
+/* ================= 初始化 ================= */
+function init(){
+  loadConfig();
+  buildTabs();
+  if(!config){
+    document.getElementById('setupPage').classList.remove('hidden');
+    setSyncBadge('off','未配置');
+    return;
+  }
+  loadCache();
+  initSupabase();
+  render();
+  syncNow();
+  window.addEventListener('online',()=>{ online=true; syncNow(); });
+  window.addEventListener('offline',()=>{ online=false; setSyncBadge('off','离线'); });
+  setInterval(()=>{ if(document.visibilityState==='visible') syncNow(); }, 60000);
+}
+init();
+</script>
+</body>
+</html>
