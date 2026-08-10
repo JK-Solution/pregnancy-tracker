@@ -92,44 +92,20 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px 16px 90p
 
 <!-- ========== 配置页 ========== -->
 <div id="setupPage" class="hidden">
-  <h2>👋 首次配置（一次就好）</h2>
-  <p>需要连接 Supabase 云数据库，让两台手机共享同一份记录。跟着下面的步骤做，约 10 分钟。</p>
+  <h2>👋 欢迎使用备孕日志</h2>
+  <p>选择你在家里的角色，并输入家庭编码即可开始。两部手机填<u>同一个编码</u>，记录就会自动同步共享。</p>
 
   <div class="card">
-    <h3>第 1 步 · 注册 Supabase</h3>
-    <p class="muted">电脑或手机浏览器打开 <b>https://supabase.com</b> → 右上角 Sign in → 用邮箱或 GitHub 注册登录。</p>
-    <p class="muted">登录后点 <b>New Project</b> → 填名字（随便写，如 family-log）→ 设置数据库密码（记下来）→ 区域选 <b>Southeast Asia (Singapore)</b>（国内访问更快）→ Create new project。</p>
-    <p class="muted">等待 1–2 分钟项目创建完成。</p>
-  </div>
-
-  <div class="card">
-    <h3>第 2 步 · 找到连接信息</h3>
-    <p class="muted">项目首页左侧栏点 <b>Project Settings → API</b>（或首页就有 API Keys 区），复制两个值：</p>
-    <div class="step-box">
-      <b>Project URL</b><code>https://xxxx.supabase.co</code>
-      <b>anon / public key</b><code>eyJhbGciOi...（很长一串）</code>
+    <h3>我是谁</h3>
+    <div class="chip-row" id="roleChips">
+      <span class="chip" data-role="丈夫" onclick="pickRole('丈夫')">👨 丈夫</span>
+      <span class="chip" data-role="妻子" onclick="pickRole('妻子')">👩 妻子</span>
     </div>
-  </div>
-
-  <div class="card">
-    <h3>第 3 步 · 创建数据表</h3>
-    <p class="muted">左侧栏点 <b>SQL Editor → New Query</b>，粘贴下面整段代码，点 <b>Run</b>，看到绿色 "Success" 即可。</p>
-    <div class="step-box"><code id="sqlText">-- 需在 supabase-setup.sql 中获取完整脚本</code></div>
-    <button class="btn small" onclick="copySql()">复制 SQL 脚本</button>
-  </div>
-
-  <div class="card">
-    <h3>第 4 步 · 填入信息并生成家庭码</h3>
-    <label>Supabase Project URL</label>
-    <input type="text" id="cfgUrl" placeholder="https://xxxx.supabase.co">
-    <label>anon / public key</label>
-    <input type="text" id="cfgKey" placeholder="eyJhbGciOi...">
-    <label>家庭标识码（两台手机填同一个，仅你们自己知道）</label>
-    <input type="text" id="cfgFam" placeholder="如 Love2026">
-    <p class="muted">建议设置不易猜的码（字母+数字混合），它就是你们数据的"钥匙"。</p>
+    <label>家庭编码（和另一半填同一个）</label>
+    <input type="text" id="cfgFam" placeholder="如 Love2026" autocomplete="off">
+    <p class="muted">字母+数字混合、不易猜即可。它就是你们数据的"钥匙"，请互相告知。</p>
     <div class="save-bar">
-      <button class="btn primary" style="flex:1" onclick="saveConfig()">保存并开始使用</button>
-      <button class="btn" onclick="testConn()">测试连接</button>
+      <button class="btn primary" style="flex:1" onclick="saveConfig()">进入备孕日志</button>
     </div>
     <div id="connResult" class="mistake" style="margin-top:8px"></div>
   </div>
@@ -137,7 +113,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px 16px 90p
 
 <!-- ========== 主界面 ========== -->
 <header>
-  <h1>📔 备孕日志</h1>
+  <h1>📔 备孕日志<span id="roleTag" style="font-size:12px;color:var(--muted);font-weight:400;margin-left:6px"></span></h1>
   <span id="syncBadge">连接中…</span>
   <button class="btn small" onclick="openSettings()">⚙️</button>
 </header>
@@ -362,6 +338,9 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px 16px 90p
 /* ================= 配置与状态 ================= */
 const LS_CFG = 'pt_config';
 const LS_DATA = 'pt_data_';
+/* 固定连接信息（已内置，无需填写） */
+const SUPABASE_URL = 'https://reuowfmjqduwpezfiyrg.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_8FBad7aJHu-7-mdXwsoE1Q_yJ7qMAHz';
 let config = null;
 let supabase = null;
 let cache = {};        // { '2026-08-10': { weight:{kg,ts}, ... } }
@@ -401,8 +380,7 @@ function saveConfigLocal(){ localStorage.setItem(LS_CFG, JSON.stringify(config))
 function loadCache(){ try{ cache=JSON.parse(localStorage.getItem(LS_DATA+config.family)) || {}; }catch(e){ cache={}; } }
 function saveCacheLocal(){ localStorage.setItem(LS_DATA+config.family, JSON.stringify(cache)); }
 function initSupabase(){
-  if(!config) return;
-  try{ supabase = window.supabase.createClient(config.url, config.key); }
+  try{ supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); }
   catch(e){ supabase=null; }
 }
 
@@ -410,7 +388,7 @@ function getRec(d,t){ return cache[d] && cache[d][t] || null; }
 function setRec(d,t,data){
   cache[d] = cache[d] || {};
   cache[d][t] = { data, ts: Date.now() };
-  pending.push({ d, t, data, ts: Date.now() });
+  pending.push({ d, t, data, ts: Date.now(), by: config?config.role:'' });
   saveCacheLocal();
   scheduleSync();
 }
@@ -432,6 +410,7 @@ async function syncNow(){
         record_date: x.d,
         record_type: x.t,
         data: JSON.parse(JSON.stringify(x.data)),
+        by: x.by || '',
         updated_at: new Date(x.ts).toISOString(),
       }));
       const { error } = await supabase.from('daily_records').upsert(rows, { onConflict:'family_id,record_date,record_type' });
@@ -922,45 +901,32 @@ function importData(e){
 }
 
 /* ================= 配置 ================= */
+let selectedRole = '';
+function pickRole(r){
+  selectedRole = r;
+  document.querySelectorAll('#roleChips .chip').forEach(c=>c.classList.toggle('active', c.dataset.role===r));
+}
 function openSettings(){
   if(!config){ document.getElementById('setupPage').classList.remove('hidden'); return; }
-  if(confirm('重新配置或切换家庭码？')){ document.getElementById('setupPage').classList.remove('hidden'); }
-}
-function copySql(){
-  const url='https://raw.githubusercontent.com/JK-Solution/pregnancy-tracker/main/supabase-setup.sql';
-  fetch(url).then(r=>r.text()).then(t=>{ navigator.clipboard.writeText(t); alert('SQL 已复制，粘贴到 Supabase SQL Editor 并运行'); })
-    .catch(()=>{ alert('自动获取失败，请打开 GitHub 仓库中的 supabase-setup.sql 复制'); });
-}
-async function testConn(){
-  const url=document.getElementById('cfgUrl').value.trim().replace(/\/$/,'');
-  const key=document.getElementById('cfgKey').value.trim();
-  const box=document.getElementById('connResult');
-  if(!url||!key){ box.textContent='请先填写 URL 和 key'; return; }
-  box.textContent='测试中…';
-  try{
-    const c=window.supabase.createClient(url,key);
-    const {error}=await c.from('daily_records').select('*').limit(1);
-    if(error && error.code==='PGRST205'){ box.textContent='✅ 连接成功，但数据表未创建。请先到 SQL Editor 运行建表脚本，再点"保存并开始使用"。'; return; }
-    if(error){ box.textContent='⚠️ '+error.message; return; }
-    box.textContent='✅ 连接成功！数据表就绪，点"保存并开始使用"。';
-  }catch(err){ box.textContent='❌ 连接失败：'+err.message; }
+  if(confirm('重新配置或切换家庭编码？')){ document.getElementById('setupPage').classList.remove('hidden'); }
 }
 function saveConfig(){
-  const url=document.getElementById('cfgUrl').value.trim().replace(/\/$/,'');
-  const key=document.getElementById('cfgKey').value.trim();
   const family=document.getElementById('cfgFam').value.trim();
-  if(!url||!key||!family){ alert('请完整填写三项信息'); return; }
-  if(!/^https:\/\/.+/.test(url)){ alert('URL 格式应为 https://xxxx.supabase.co'); return; }
-  config={url,key,family};
+  const box=document.getElementById('connResult');
+  if(!selectedRole){ box.textContent='请先选择角色（丈夫/妻子）'; return; }
+  if(!family){ box.textContent='请输入家庭编码'; return; }
+  config={family, role:selectedRole};
   saveConfigLocal();
   loadCache();
   initSupabase();
   document.getElementById('setupPage').classList.add('hidden');
+  document.getElementById('roleTag').textContent = '· '+(selectedRole==='妻子'?'👩 妻子':'👨 丈夫');
   buildTabs(); render(); syncNow();
-  alert('配置完成！两台手机填相同信息即可共享数据。');
+  box.textContent = '✅ 已保存，记录将自动同步到云端。';
+  setTimeout(()=>{ box.textContent=''; }, 3000);
 }
 function switchFamily(){
-  if(confirm('切换家庭码会读取该码对应的数据。确定继续？')){
+  if(confirm('切换家庭编码会读取该编码对应的数据。确定继续？')){
     config=null; localStorage.removeItem(LS_CFG);
     document.getElementById('setupPage').classList.remove('hidden');
   }
@@ -992,6 +958,7 @@ function init(){
     setSyncBadge('off','未配置');
     return;
   }
+  document.getElementById('roleTag').textContent = '· '+(config.role==='妻子'?'👩 妻子':'👨 丈夫');
   loadCache();
   initSupabase();
   render();

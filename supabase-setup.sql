@@ -8,6 +8,7 @@ create table if not exists public.daily_records (
   record_date date not null,
   record_type text not null,
   data jsonb not null default '{}'::jsonb,
+  by text not null default '',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
