@@ -37,7 +37,7 @@ function renderToday(){
   const d = currentDate;
   const items = [
     {k:'weight', ok:!!getRec(d,'weight'), label:'体重'},
-    {k:'med', ok:medAllDone(getRec(d,'med')?.data.items, SUPPLEMENTS), label:'用药'},
+    {k:'med', ok:medAllDone(getRec(d,'med')?.data, SUPPLEMENTS), label:'用药'},
     {k:'diet', ok:dietCalOk(getRec(d,'diet')?.data.items, GOALS.kcalMin), label:'饮食'},
     {k:'cycle', ok:!!getRec(d,'cycle'), label:'周期'},
     {k:'intimacy', ok:!!getRec(d,'intimacy'), label:'同房'},
@@ -47,7 +47,7 @@ function renderToday(){
   ];
   document.getElementById('todaySummary').innerHTML = items.map(it=>`
     <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--border)">
-      <span style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;background:${it.ok?'#e2f5e9':'var(--surface2)'}">${it.ok?'✅':'⬜'}</span>
+      <span style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;background:${it.ok?'var(--good-soft)':'var(--surface2)'}">${it.ok?'✅':'⬜'}</span>
       <span style="flex:1">${it.label}</span>
       <span class="pill ${it.ok?'green':'yellow'}">${it.ok?'已记录':'未记录'}</span>
     </div>`).join('');
@@ -111,15 +111,17 @@ function drawWeightChart(){
   ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--good');
   ctx.setLineDash([5,4]); ctx.beginPath();
   ctx.moveTo(0,Y(goal)); ctx.lineTo(W,Y(goal)); ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle='#16a34a'; ctx.font='11px sans-serif'; ctx.fillText(`目标 ${goal}kg`, W-60, Y(goal)-4);
+  ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--good').trim()||'#16a34a';
+  ctx.font='11px sans-serif'; ctx.fillText(`目标 ${goal}kg`, W-60, Y(goal)-4);
   // 折线
   ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--accent');
   ctx.lineWidth=2; ctx.beginPath();
   pts.forEach((p,i)=>{ i?ctx.lineTo(X(i),Y(p.kg)):ctx.moveTo(X(i),Y(p.kg)); });
   ctx.stroke();
-  // 点
+  // 点（颜色跟随主题 CSS 变量）
+  const accent=getComputedStyle(document.body).getPropertyValue('--accent').trim()||'#e11d48';
   pts.forEach((p,i)=>{
-    ctx.fillStyle='#e11d48'; ctx.beginPath(); ctx.arc(X(i),Y(p.kg),3,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=accent; ctx.beginPath(); ctx.arc(X(i),Y(p.kg),3,0,Math.PI*2); ctx.fill();
   });
   // 轴
   ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--muted');
@@ -134,33 +136,55 @@ function drawWeightChart(){
   document.getElementById('chartDelta').textContent = wk.length>=2 ? (last-wk[0].kg>=0?'+':'')+(last-wk[0].kg).toFixed(1)+'kg' : '—';
 }
 
-/* ================= 用药 ================= */
+/* ================= 用药 =================
+   data: {items:{id:bool}, doses:{id:['08:30','20:15']}}
+   点药片一次 = 记一次服药（自动带当前时刻）；点满每日次数后再点 = 清除今日该药 */
 function renderMed(){
   const r=getRec(currentDate,'med');
+  const data = r ? r.data : null;
   const st=document.getElementById('mState');
-  if(r){
-    const n=SUPPLEMENTS.filter(s=>r.data.items[s.id]).length;
-    st.textContent=n+'/'+SUPPLEMENTS.length+' 项已服';
-    st.className='state '+(n===SUPPLEMENTS.length?'ok':'miss');
+  const need=SUPPLEMENTS.reduce((a,s)=>a+(s.times||1),0);
+  if(data){
+    const taken=SUPPLEMENTS.reduce((a,s)=>a+Math.min(medTakenCount(data,s.id),s.times||1),0);
+    st.textContent=taken+'/'+need+' 次已服';
+    st.className='state '+(taken===need?'ok':'miss');
   }
   else { st.textContent='未打卡'; st.className='state miss'; }
-  const items = r ? r.data.items : {};
-  document.getElementById('medGrid').innerHTML = SUPPLEMENTS.map(s=>`
-    <div class="chip ${items[s.id]?'active':''}" onclick="toggleMed('${s.id}')">${esc(s.name)}<br><small style="font-size:10px">${esc(s.dose)}</small></div>
-  `).join('');
+  document.getElementById('medGrid').innerHTML = SUPPLEMENTS.map(s=>{
+    const n=medTakenCount(data,s.id);
+    const totalN=s.times||1;
+    const done=n>=totalN;
+    const last=(data && data.doses && Array.isArray(data.doses[s.id]) && data.doses[s.id].length)
+      ? data.doses[s.id][data.doses[s.id].length-1] : '';
+    const badge = done ? `✓ ${n}/${totalN}${last?' · '+esc(last):''}` : `${n}/${totalN}${last?' · '+esc(last):''}`;
+    return `<div class="chip ${done?'active':''}" onclick="toggleMed('${s.id}')">${esc(s.name)}<br><small style="font-size:10px">${esc(s.dose)}<br>${badge}</small></div>`;
+  }).join('');
   // 最近 N 天叶酸
   const days=[];
   for(let i=GOALS.medStreakDays-1;i>=0;i--){ days.push(fmtDate(addDays(new Date(),-i))); }
-  const recs=days.map(dd=>{const x=getRec(dd,'med'); return {d:dd, ok:!!(x&&x.data.items.folic)};});
+  const recs=days.map(dd=>{const x=getRec(dd,'med'); return {d:dd, ok:!!(x&&medTakenCount(x.data,'folic')>0)};});
   document.getElementById('medRecent').innerHTML =
     `<div class="note-item"><span>近${GOALS.medStreakDays}天叶酸</span><span>${recs.map(x=>`<span class="pill ${x.ok?'green':'red'}" style="margin:0 2px">${x.ok?'✓':'✗'}</span>`).join('')}</span></div>`
     + `<div class="note-item"><span>漏服提醒</span><b>${recs.filter(x=>!x.ok).length} 天未服</b></div>`;
 }
 function toggleMed(id){
   const r=getRec(currentDate,'med');
-  const items = r ? JSON.parse(JSON.stringify(r.data.items)) : {};
-  if(!items[id]) items[id]=true; else delete items[id];
-  setRec(currentDate,'med',{items});
+  const data = r ? JSON.parse(JSON.stringify(r.data)) : {};
+  if(!data.doses || typeof data.doses!=='object' || Array.isArray(data.doses)) data.doses={};
+  if(!data.items || typeof data.items!=='object' || Array.isArray(data.items)) data.items={};
+  const s=SUPPLEMENTS.find(x=>x.id===id);
+  const totalN=s?(s.times||1):1;
+  const list = Array.isArray(data.doses[id]) ? [...data.doses[id]] : [];
+  if(list.length>=totalN){
+    if(!confirm(`今日「${s?s.name:id}」已服 ${totalN} 次。清除该药今日记录？`)) return;
+    delete data.doses[id]; data.items[id]=false;
+  } else {
+    const now=new Date();
+    const hm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+    list.push(hm);
+    data.doses[id]=list; data.items[id]=true;
+  }
+  setRec(currentDate,'med',data);
   renderMed(); renderToday();
 }
 
@@ -396,7 +420,7 @@ function renderReport(){
   const wRecs=monthDays.map(dd=>getRec(dd,'weight')?.data.kg).filter(x=>x);
   document.getElementById('rAvgW').textContent = wRecs.length? (wRecs.reduce((a,b)=>a+b,0)/wRecs.length).toFixed(1)+'kg' : '—';
   document.getElementById('rDeltaW').textContent = wRecs.length>=2 ? (wRecs[wRecs.length-1]-wRecs[0]>=0?'+':'')+(wRecs[wRecs.length-1]-wRecs[0]).toFixed(1)+'kg' : '—';
-  const folicDays=monthDays.filter(dd=>{const x=getRec(dd,'med');return x&&x.data.items.folic;}).length;
+  const folicDays=monthDays.filter(dd=>{const x=getRec(dd,'med');return x&&medTakenCount(x.data,'folic')>0;}).length;
   document.getElementById('rFolic').textContent = Math.round(folicDays/monthDays.length*100)+'%';
   const calS=monthDays.map(dd=>sumDiet(getRec(dd,'diet')?.data.items||[]).c).filter(c=>c>0);
   const proS=monthDays.map(dd=>sumDiet(getRec(dd,'diet')?.data.items||[]).p).filter(p=>p>0);
@@ -496,4 +520,30 @@ function switchFamily(){
 /* ================= 底部导航 ================= */
 function buildTabs(){
   document.getElementById('tabbar').innerHTML=TABS.map(t=>`<button class="tab ${t.id===selectedTab?'active':''}" data-tab="${t.id}" onclick="switchPage('${t.id}')"><span class="ico">${t.ico}</span>${t.label}</button>`).join('');
+}
+
+/* ================= 主题：auto(跟随系统) / light / dark ================= */
+const THEMES = ['auto','light','dark'];
+const THEME_ICO = {auto:'🌓', light:'☀️', dark:'🌙'};
+function resolveTheme(){
+  const t = config && config.theme ? config.theme : 'auto';
+  if(t==='auto') return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return t;
+}
+function applyTheme(){
+  const cur = config && config.theme ? config.theme : 'auto';
+  const t = resolveTheme();
+  document.body.dataset.theme = t;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.content = t==='dark' ? '#0f1115' : '#f5f6f8';
+  const btn = document.getElementById('themeBtn');
+  if(btn) btn.textContent = THEME_ICO[cur];
+  if(t!==cur && typeof cache!=='undefined' && cache && document.getElementById('weightChart')) drawWeightChart(); // 图表颜色跟随主题重绘
+}
+function cycleTheme(){
+  const cur = config && config.theme ? config.theme : 'auto';
+  config = config || {};
+  config.theme = THEMES[(THEMES.indexOf(cur)+1)%THEMES.length];
+  saveConfigLocal();
+  applyTheme();
 }

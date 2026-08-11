@@ -1,12 +1,19 @@
 :root{
   --bg:#f5f6f8; --surface:#ffffff; --surface2:#eef0f3; --text:#1c1e21; --muted:#5c6470;
   --accent:#e11d48; --accent-soft:#fde7ec; --border:#e2e5ea; --shadow:0 1px 3px rgba(0,0,0,.08);
-  --good:#16a34a; --warn:#d97706; --bad:#dc2626;
+  --good:#16a34a; --warn:#d97706; --bad:#dc2626; --good-soft:#e2f5e9;
+  color-scheme:light;  /* 让原生控件（滚动条/输入框）跟随主题 */
 }
 [data-theme="dark"]{
   --bg:#0f1115; --surface:#171a21; --surface2:#1f232c; --text:#e7e9ee; --muted:#9aa3b2;
   --accent:#fb7185; --accent-soft:#3b1f29; --border:#2a2f3a; --shadow:0 1px 3px rgba(0,0,0,.4);
+  --good-soft:#10281c;
+  color-scheme:dark;
 }
+/* 深色模式下的浅色 pills / 状态徽标（浅底深字在深色背景上对比度不足） */
+[data-theme="dark"] .pill.green{background:#10281c;color:#4ade80}
+[data-theme="dark"] .pill.red{background:#3b1416;color:#f87171}
+[data-theme="dark"] .pill.yellow{background:#33280d;color:#fbbf24}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
 body{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.65;font-size:15px;max-width:640px;margin:0 auto;padding-bottom:76px}

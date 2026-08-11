@@ -14,7 +14,7 @@ function loadLogic(){
 }
 const L = loadLogic();
 const { fmtDate, parseDate, addDays, daysBetween, humanDate,
-        sumDiet, dietCalOk, medAllDone, esc,
+        sumDiet, dietCalOk, medTakenCount, medAllDone, esc,
         cycleStats, predictFertile, migrateRec, validateImport } = L;
 
 describe('日期工具', () => {
@@ -49,15 +49,27 @@ describe('饮食统计', () => {
   });
 });
 
-describe('用药打卡', () => {
-  const S = [{id:'folic'}, {id:'aspirin'}];
-  it('全部已服才算达标', () => {
-    expect(medAllDone({folic:true, aspirin:true}, S)).toBe(true);
-    expect(medAllDone({folic:true}, S)).toBe(false);
+describe('用药打卡（按次记录 doses）', () => {
+  const S = [{id:'folic', times:1}, {id:'hcq', times:2}];
+  it('doses 数组按每日次数计数，服满才算达标', () => {
+    expect(medAllDone({doses:{folic:['08:00'], hcq:['08:00','20:00']}}, S)).toBe(true);
+    expect(medAllDone({doses:{folic:['08:00'], hcq:['08:00']}}, S)).toBe(false);   // hcq 一天两次只服一次
+    expect(medAllDone({doses:{folic:['08:00','20:00'], hcq:['08:00','20:00']}}, S)).toBe(true); // 多服不扣分
+  });
+  it('兼容旧版 items 布尔（算已服 1 次）', () => {
+    expect(medAllDone({items:{folic:true, hcq:true}}, S)).toBe(false);  // hcq 需要 2 次
+    expect(medAllDone({items:{folic:true}, doses:{}}, [{id:'folic', times:1}])).toBe(true); // items 兜底在 doses 存在时也生效
   });
   it('无记录不算达标', () => {
     expect(medAllDone(null, S)).toBe(false);
     expect(medAllDone({}, S)).toBe(false);
+    expect(medAllDone({doses:{}}, S)).toBe(false);
+  });
+  it('medTakenCount 计数', () => {
+    expect(medTakenCount({doses:{folic:['08:00','20:00']}}, 'folic')).toBe(2);
+    expect(medTakenCount({items:{folic:true}}, 'folic')).toBe(1);
+    expect(medTakenCount({doses:{folic:[]}}, 'folic')).toBe(0);
+    expect(medTakenCount(null, 'folic')).toBe(0);
   });
 });
 
@@ -115,8 +127,21 @@ describe('数据迁移', () => {
     expect(migrateRec('med', {items:{folic:true}}).v).toBe(2);
     expect(migrateRec('med', {items:{folic:true}}).items.folic).toBe(true);
   });
+  it('旧 items 布尔迁移为 doses（时间未知记空串）', () => {
+    const m = migrateRec('med', {items:{folic:true, aspirin:false}});
+    expect(m.doses.folic).toEqual(['']);
+    expect(m.doses.aspirin).toBeUndefined();
+    expect(m.items.folic).toBe(true);
+  });
+  it('doses 存在时以它为准重建 items 派生标记', () => {
+    const m = migrateRec('med', {items:{folic:true, aspirin:true}, doses:{folic:['08:00','20:00']}});
+    expect(m.doses.folic).toEqual(['08:00','20:00']);
+    expect(m.items.folic).toBe(true);
+    expect(m.items.aspirin).toBeUndefined();   // 只有 doses 才算已服
+  });
   it('容错损坏数据并兜底结构', () => {
     expect(migrateRec('med', null).items).toEqual({});
+    expect(migrateRec('med', null).doses).toEqual({});
     expect(migrateRec('med', '垃圾').items).toEqual({});
     expect(migrateRec('diet', null).items).toEqual([]);
     expect(migrateRec('cycle', {events:null}).events).toEqual([]);

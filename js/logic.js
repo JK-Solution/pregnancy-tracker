@@ -23,10 +23,18 @@ function dietCalOk(items, minKcal){
   if(!Array.isArray(items)) return false;
   return sumDiet(items).c >= minKcal;
 }
-/* 用药是否全部已服（items: {id: true}，supplements: [{id}]） */
-function medAllDone(items, supplements){
-  if(!items || typeof items !== 'object') return false;
-  return supplements.every(s => items[s.id]);
+/* 某药今日已服次数：新版 doses 为实际服用时刻数组（如 ['08:30','20:15']），
+   旧版 items 布尔兼容为已服 1 次。data: med 记录的数据对象 */
+function medTakenCount(data, id){
+  if(!data || typeof data !== 'object') return 0;
+  if(data.doses && Array.isArray(data.doses[id])) return data.doses[id].length;
+  if(data.items && data.items[id] === true) return 1;
+  return 0;
+}
+/* 用药是否按每日次数全部服完（supplements: [{id, times}]，times 默认 1） */
+function medAllDone(data, supplements){
+  if(!data || typeof data !== 'object') return false;
+  return supplements.every(s => medTakenCount(data, s.id) >= (s.times||1));
 }
 
 /* ---------- HTML 转义（防存储型 XSS，所有用户输入渲染前必须过这里） ---------- */
@@ -73,7 +81,18 @@ function migrateRec(type, data){
   catch(e){ out = {}; }
   if(!out || typeof out!=='object') out = {};
   // 各类型核心字段的结构兜底（老数据缺字段时不会崩）
-  if(type==='med' && (!out.items || typeof out.items!=='object' || Array.isArray(out.items))) out.items={};
+  if(type==='med'){
+    if(!out.items || typeof out.items!=='object' || Array.isArray(out.items)) out.items={};
+    // v2 起 doses 记录每次服药时刻；旧 items 布尔迁移为 1 次（时间未知记空串）
+    if(!out.doses || typeof out.doses!=='object' || Array.isArray(out.doses)){
+      out.doses={};
+      for(const k in out.items){ if(out.items[k]===true) out.doses[k]=['']; }
+    } else {
+      // doses 存在时以它为准重建 items 派生标记（保持两键一致）
+      for(const k in out.items){ delete out.items[k]; }
+      for(const k in out.doses){ if(Array.isArray(out.doses[k]) && out.doses[k].length) out.items[k]=true; }
+    }
+  }
   if(type==='diet' && !Array.isArray(out.items)) out.items=[];
   if(type==='cycle' && !Array.isArray(out.events)) out.events=[];
   if(type==='intimacy' && !Array.isArray(out.items)) out.items=[];
@@ -112,7 +131,7 @@ function validateImport(j){
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     fmtDate, parseDate, addDays, daysBetween, todayStr, humanDate,
-    sumDiet, dietCalOk, medAllDone, esc,
+    sumDiet, dietCalOk, medTakenCount, medAllDone, esc,
     cycleStats, predictFertile,
     migrateRec, validateImport, REC_VERSION,
   };

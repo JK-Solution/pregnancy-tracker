@@ -1,17 +1,18 @@
 /* ================= 配置（所有可调参数集中在这里，改需求不用翻代码） ================= */
 
-/* 用药 / 补充剂列表：id 是数据键，改名会丢历史打卡记录，慎改 */
+/* 用药 / 补充剂列表：id 是数据键，改名会丢历史打卡记录，慎改
+   times: 每日服用次数（一天两次写 2）。点击药片一次记一次服药，自动带时间戳 */
 const SUPPLEMENTS = [
-  {id:'folic', name:'叶酸', dose:'400mg'},
-  {id:'aspirin', name:'阿司匹林', dose:'~25mg'},
-  {id:'hcq', name:'硫酸羟氯喹片', dose:'~一片半'},
-  {id:'coq10', name:'辅酶Q10', dose:'1片'},
-  {id:'vitc', name:'维生素C', dose:'1片'},
-  {id:'vitb', name:'维生素B', dose:'1片'},
-  {id:'zinc', name:'葡萄糖酸锌', dose:'~70mg'},
-  {id:'iron', name:'铁', dose:'~20mg'},
-  {id:'vitd', name:'维生素D', dose:'400–800IU'},
-  {id:'dha', name:'DHA', dose:'≥200mg'},
+  {id:'folic', name:'叶酸', dose:'400mg', times:1},
+  {id:'aspirin', name:'阿司匹林', dose:'~25mg', times:1},
+  {id:'hcq', name:'硫酸羟氯喹片', dose:'~一片半', times:2},
+  {id:'coq10', name:'辅酶Q10', dose:'1片', times:1},
+  {id:'vitc', name:'维生素C', dose:'1片', times:1},
+  {id:'vitb', name:'维生素B', dose:'1片', times:1},
+  {id:'zinc', name:'葡萄糖酸锌', dose:'~70mg', times:1},
+  {id:'iron', name:'铁', dose:'~20mg', times:1},
+  {id:'vitd', name:'维生素D', dose:'400–800IU', times:1},
+  {id:'dha', name:'DHA', dose:'≥200mg', times:1},
 ];
 
 const MEALS = ['早餐','加餐1','午餐','加餐2','晚餐'];

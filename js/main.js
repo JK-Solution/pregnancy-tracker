@@ -1,6 +1,9 @@
 /* ================= 初始化 ================= */
 async function init(){
   loadConfig();
+  applyTheme();
+  // 系统主题变化时，auto 模式实时跟随（手动选过的模式不受影响）
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
   buildTabs();
   if(!config){
     document.getElementById('setupPage').classList.remove('hidden');

@@ -6,6 +6,7 @@
 <title>备孕记录 · 家庭日志</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="stylesheet" href="./css/style.css">
+<meta name="theme-color" content="#f5f6f8">
 </head>
 <body data-theme="light">
 
@@ -34,6 +35,7 @@
 <header>
   <h1>📔 备孕日志<span id="roleTag" style="font-size:12px;color:var(--muted);font-weight:400;margin-left:6px"></span></h1>
   <span id="syncBadge">连接中…</span>
+  <button class="btn small" id="themeBtn" title="切换主题（自动/浅色/深色）" onclick="cycleTheme()">🌓</button>
   <button class="btn small" onclick="openSettings()">⚙️</button>
 </header>
 
@@ -85,7 +87,7 @@
 <div class="page" id="page-med">
   <div class="card">
     <h3>用药 / 补充剂打卡 <span class="state" id="mState">—</span></h3>
-    <p class="muted">叶酸必须孕前 3 个月每天不间断。点击药品即保存并自动同步，已服药品会高亮。</p>
+    <p class="muted">叶酸必须孕前 3 个月每天不间断。点一次记一次服药（自动记录时刻）；每天多次的药（如硫酸羟氯喹片）点多几次；点满后再点可清除今日该药记录。</p>
     <div class="quick-grid" id="medGrid"></div>
     <div class="note-list" id="medRecent"></div>
   </div>
