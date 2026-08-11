@@ -8,7 +8,7 @@ create table if not exists public.daily_records (
   family_id text not null,
   record_date date not null,
   record_type text not null,
-  data jsonb not null default '{}'::jsonb,
+  data jsonb not null default '{}',
   by text not null default '',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -17,8 +17,18 @@ create table if not exists public.daily_records (
 create index if not exists idx_records_lookup
   on public.daily_records (family_id, record_date, record_type);
 
-alter table public.daily_records
-  add constraint uq_family_date_type unique (family_id, record_date, record_type);
+-- 约束已存在时跳过（add constraint 不支持 if not exists，老库重跑会报 42P07）
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'uq_family_date_type'
+      and conrelid = 'public.daily_records'::regclass
+  ) then
+    alter table public.daily_records
+      add constraint uq_family_date_type unique (family_id, record_date, record_type);
+  end if;
+end $$;
 
 -- ========== 2. 行级安全（重要！旧版 using(true) 等于全库裸奔，务必更新到这段） ==========
 -- 访问凭据 = 请求头 x-family-id（即家庭码）。客户端由 supabase-js 的 global.headers 自动携带。
