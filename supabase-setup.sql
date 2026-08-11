@@ -58,6 +58,8 @@ create table if not exists public.family_members (
 alter table public.families enable row level security;
 alter table public.family_members enable row level security;
 -- families 不建任何策略 = 全拒；family_members 只允许读自己的成员行（RLS 策略内子查询需要）
+-- create policy 不支持 if not exists，先删后建保证幂等
+drop policy if exists "members_read_own" on public.family_members;
 
 create policy "members_read_own" on public.family_members
   for select to authenticated
