@@ -1,0 +1,14 @@
+{
+  "name": "pregnancy-tracker",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "备孕记录 · 家庭日志（纯前端 + Supabase 同步）",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0"
+  }
+}

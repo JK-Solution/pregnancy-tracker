@@ -1,0 +1,9 @@
+{
+  "name": "备孕记录 · 家庭日志",
+  "short_name": "备孕日志",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f5f6f8",
+  "theme_color": "#e11d48",
+  "lang": "zh-CN"
+}
