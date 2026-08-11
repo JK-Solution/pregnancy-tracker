@@ -455,21 +455,36 @@ function openSettings(){
   if(!config){ document.getElementById('setupPage').classList.remove('hidden'); return; }
   if(confirm('重新配置或切换家庭编码？')){ document.getElementById('setupPage').classList.remove('hidden'); }
 }
-function saveConfig(){
+async function saveConfig(){
   const family=document.getElementById('cfgFam').value.trim();
   const box=document.getElementById('connResult');
   if(!selectedRole){ box.textContent='请先选择角色（丈夫/妻子）'; return; }
   if(!family){ box.textContent='请输入家庭编码'; return; }
-  if(family.length<6){ box.textContent='家庭编码太短，建议 6 位以上字母+数字混合'; return; }
+  if(family.length<8 || !/^[A-Za-z0-9_]+$/.test(family)){ box.textContent='家庭编码需 8 位以上字母+数字混合（如 Love2026）'; return; }
+  box.textContent='⏳ 正在连接云端…';
+  // 1. 匿名登录（每台设备一个账户）
+  const auth = await ensureAuth();
+  if(auth.error==='anonymous_disabled'){
+    box.textContent='请在 Supabase 控制台开启匿名登录：Authentication → Providers → Anonymous sign-ins';
+    return;
+  }
+  if(auth.error){ box.textContent='登录失败：'+auth.error; return; }
+  // 2. 加入 / 创建家庭（家庭码即钥匙，仅此一次发送）
+  const jf = await joinFamily(family);
+  if(jf.error){
+    box.textContent = jf.error==='invalid_code' ? '家庭编码需 8 位以上字母+数字混合' : '加入家庭失败：'+jf.error;
+    return;
+  }
   config={family, role:selectedRole};
   saveConfigLocal();
   loadCache();
-  initSupabase();   // 新家庭码 → 重新初始化客户端（携带新 header）
   document.getElementById('setupPage').classList.add('hidden');
   document.getElementById('roleTag').textContent = '· '+(selectedRole==='妻子'?'👩 妻子':'👨 丈夫');
   buildTabs(); render(); syncNow();
-  box.textContent = '✅ 已保存，记录将自动同步到云端。';
-  setTimeout(()=>{ box.textContent=''; }, 3000);
+  box.textContent = jf.created
+    ? '⚠️ 该编码是新家庭，已创建。请和另一半填<u>同一个编码</u>，两边数据才会共享。'
+    : '✅ 已保存，记录将自动同步到云端。';
+  setTimeout(()=>{ box.textContent=''; }, 5000);
 }
 function switchFamily(){
   if(confirm('切换家庭编码会读取该编码对应的数据。确定继续？')){

@@ -1,5 +1,5 @@
 /* 离线缓存：应用外壳 cache-first；仅处理同源请求（不缓存 supabase API 响应，避免同步读到旧数据） */
-const CACHE = 'pt-v2';
+const CACHE = 'pt-v3';   // 每次发布前端版本时 +1，确保旧缓存被清除
 const ASSETS = [
   './', './index.html', './css/style.css', './manifest.webmanifest',
   './js/config.js', './js/logic.js', './js/storage.js', './js/ui.js', './js/main.js',

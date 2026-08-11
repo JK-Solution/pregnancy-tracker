@@ -19,13 +19,45 @@ function saveConfigLocal(){ try{ localStorage.setItem(LS_CFG, JSON.stringify(con
 function loadCache(){ try{ cache = JSON.parse(localStorage.getItem(LS_DATA+(config?config.family:''))) || {}; }catch(e){ cache={}; } }
 function saveCacheLocal(){ try{ localStorage.setItem(LS_DATA+config.family, JSON.stringify(cache)); }catch(e){ console.warn('缓存保存失败（可能超出存储上限）', e); } }
 
-/* 初始化 Supabase 客户端；家庭码放入请求头，供 RLS 校验（见 supabase-setup.sql） */
+/* 初始化 Supabase 客户端。数据访问走匿名登录的 auth.uid()，由 RLS 校验成员关系（见 supabase-setup.sql） */
 function initSupabase(){
   try{
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-      global: { headers: config && config.family ? { 'x-family-id': config.family } : {} },
-    });
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   }catch(e){ supabase = null; }
+}
+
+/* ---------- 匿名登录 ----------
+ * 每台设备一个匿名账户（auth.uid()），RSL 用成员关系判断可访问的家庭。
+ * 需在 Supabase 控制台开启 Anonymous sign-ins。
+ */
+async function ensureAuth(){
+  if(!supabase) initSupabase();
+  if(!supabase) return {error:'no_client'};
+  try{
+    const { data, error } = await supabase.auth.getSession();
+    if(!error && data && data.session) return {ok:true};
+    const r = await supabase.auth.signInAnonymously();
+    if(r.error){
+      if(r.error.status===422 || /anonymous/i.test(r.error.message||'')){
+        return {error:'anonymous_disabled'};
+      }
+      return {error: r.error.message || 'login_failed'};
+    }
+    return {ok:true};
+  }catch(e){ return {error:'login_failed'}; }
+}
+
+/* 加入 / 创建家庭：家庭码即钥匙，只在加入时发送一次，服务端存 bcrypt 哈希 */
+async function joinFamily(code){
+  if(!supabase) return {error:'no_client'};
+  const { data, error } = await supabase.rpc('join_family', { p_code: code });
+  if(error){
+    const msg = error.message || '';
+    if(/not_authenticated/.test(msg)) return {error:'not_authenticated'};
+    if(/invalid_code/.test(msg)) return {error:'invalid_code'};
+    return {error: msg || 'join_failed'};
+  }
+  return {ok:true, created: !!(data && data.created)};
 }
 
 /* ---------- 记录读写 ---------- */

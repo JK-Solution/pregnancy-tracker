@@ -4,7 +4,7 @@
 const SUPPLEMENTS = [
   {id:'folic', name:'叶酸', dose:'400mg'},
   {id:'aspirin', name:'阿司匹林', dose:'~25mg'},
-  {id:'hcq', name:'硫酸氢氯喹片', dose:'~一片半'},
+  {id:'hcq', name:'硫酸羟氯喹片', dose:'~一片半'},
   {id:'coq10', name:'辅酶Q10', dose:'1片'},
   {id:'vitc', name:'维生素C', dose:'1片'},
   {id:'vitb', name:'维生素B', dose:'1片'},

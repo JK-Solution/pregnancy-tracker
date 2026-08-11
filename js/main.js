@@ -1,5 +1,5 @@
 /* ================= 初始化 ================= */
-function init(){
+async function init(){
   loadConfig();
   buildTabs();
   if(!config){
@@ -11,7 +11,11 @@ function init(){
   loadCache();
   initSupabase();
   render();
-  syncNow();
+  // 匿名登录（auth.uid() 由 RLS 校验成员关系），成功后开始同步
+  const auth = await ensureAuth();
+  if(auth.error==='anonymous_disabled'){ setSyncBadge('off','匿名登录未开启'); }
+  else if(auth.error){ setSyncBadge('off','登录失败'); }
+  else { syncNow(); }
   window.addEventListener('online', ()=>{ online=true; syncNow(); });
   window.addEventListener('offline', ()=>{ online=false; setSyncBadge('off','离线'); });
   // 回到前台时刷新云端数据
