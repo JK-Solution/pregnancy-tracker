@@ -37,7 +37,9 @@ begin
 end $$;
 
 -- ========== 2. 家庭与成员（新增，仅通过下方 security definer 函数访问） ==========
-create extension if not exists pgcrypto;
+-- pgcrypto：若已存在（Supabase 通常装在 extensions schema）则跳过；
+-- 若未安装则装到 public。join_family 的 search_path 两种都兼容。
+create extension if not exists pgcrypto with schema public;
 
 create table if not exists public.families (
   code text primary key,
@@ -67,7 +69,7 @@ create policy "members_read_own" on public.family_members
 create or replace function public.join_family(p_code text)
 returns jsonb
 language plpgsql security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   u uuid := auth.uid();
