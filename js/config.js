@@ -2,11 +2,11 @@
 
 /* 用药 / 补充剂列表：id 是数据键，改名会丢历史打卡记录，慎改 */
 const SUPPLEMENTS = [
-  {id:'folic', name:'叶酸', dose:'400–800µg'},
-  {id:'aspirin', name:'阿司匹林', dose:'~100mg'},
-  {id:'hcq', name:'硫酸氢氯奎片', dose:'~200mg'},
-  {id:'coq10', name:'辅酶Q10', dose:'100–200mg'},
-  {id:'vitc', name:'维生素C', dose:'~100mg'},
+  {id:'folic', name:'叶酸', dose:'400mg'},
+  {id:'aspirin', name:'阿司匹林', dose:'~25mg'},
+  {id:'hcq', name:'硫酸氢氯喹片', dose:'~一片半'},
+  {id:'coq10', name:'辅酶Q10', dose:'1片'},
+  {id:'vitc', name:'维生素C', dose:'1片'},
   {id:'vitb', name:'维生素B', dose:'1片'},
   {id:'zinc', name:'葡萄糖酸锌', dose:'~70mg'},
   {id:'iron', name:'铁', dose:'~20mg'},
